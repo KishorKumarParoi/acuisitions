@@ -8,6 +8,13 @@
       "when": 1765124097040,
       "tag": "20251207161457_loose_silver_centurion",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1765175170759,
+      "tag": "20251208062610_stormy_patriot",
+      "breakpoints": true
     }
   ]
 }

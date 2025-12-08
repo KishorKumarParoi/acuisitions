@@ -1,0 +1,69 @@
+/* eslint-disable indent */
+import { slidingWindow } from '@arcjet/node';
+import aj from '../config/arcjet.js';
+import logger from '../config/logger.js';
+
+const securityMiddleware = async (req, res, next) => {
+  try {
+    const role = req.user?.role || 'guest';
+    let limit;
+    let message;
+
+    switch (role) {
+      case 'admin':
+        limit = 20;
+        message = 'Admin rate limit exceeded (20 requests per minute)';
+        break;
+      case 'user':
+        limit = 10;
+        message = 'User rate limit exceeded (10 requests per minute)';
+        break;
+      case 'guest':
+        limit = 5;
+        message = 'Guest rate limit exceeded (5 requests per minute)';
+        break;
+      default:
+    }
+
+    const client = aj.withRule(
+      slidingWindow({ mode: 'LIVE', interval: '1m', max: limit, name: `${role}-rate-limit` })
+    );
+
+    const decision = await client.protect(req, {
+      requested: 1,
+    });
+
+    if (decision.isDenied()) {
+      logger.warn(`Security blocked request from ${req.ip}`, {
+        reason: decision.reason,
+        ip: req.ip,
+      });
+
+      if (decision.reason.isRateLimit()) {
+        return res.status(429).json({
+          message: 'Too many requests. Please try again later.',
+          retryAfter: decision.reason.retryAfter,
+        });
+      }
+
+      if (decision.reason.isBot()) {
+        return res.status(403).json({
+          message: 'Bot traffic detected and blocked.',
+        });
+      }
+
+      return res.status(403).json({
+        message: 'Request blocked for security reasons.',
+      });
+    }
+
+    logger.debug(`Security check passed for ${req.ip}`);
+    next();
+  } catch (error) {
+    logger.error('Security middleware error:', error);
+    // Allow request to proceed on error to avoid blocking legitimate traffic
+    next();
+  }
+};
+
+export default securityMiddleware;
