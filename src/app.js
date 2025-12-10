@@ -21,18 +21,32 @@ app.use(securityMiddleware);
 
 app.get('/', (req, res) => {
   logger.info('Hello from Acquisitions API!');
-  res.status(200).send('Hello, World!');
+  res.status(200).json({ message: 'Hello, World!' });
 });
 
 app.get('/health', (req, res) => {
-  res.status(200).send('OK');
+  res.status(200).json({ message: 'OK' });
 });
 
 app.get('/api', (req, res) => {
-  res.status(200).send('Acquisitions API is running');
+  res.status(200).json({ message: 'Acquisitions API is running' });
 });
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
+// Global error handler
+app.use((err, req, res) => {
+  logger.error('Unhandled error:', err);
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal Server Error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  });
+});
 
 export default app;

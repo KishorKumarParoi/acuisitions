@@ -71,6 +71,7 @@ export const updateUserProfile = async (req, res, next) => {
     }
 
     const { id } = validationResult.data;
+    console.log('body dta', bodyValidation.data);
     const updates = bodyValidation.data;
 
     // Check if user is trying to update their own profile or is admin

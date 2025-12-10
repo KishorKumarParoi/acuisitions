@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: acquisitions-api
+  namespace: acquisitions
+  labels:
+    app: acquisitions-api
+spec:
+  type: ClusterIP
+  selector:
+    app: acquisitions-api
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3001
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600
